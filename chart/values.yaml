@@ -94,18 +94,11 @@ volumes:
     configMap:
       name: snowplow-cache-warmup
       defaultMode: 420
-  # L1 on-disk cache scratch space. EmptyDir is fine because Redis is
-  # the source of truth; the disk layer is just a GC-free hot path
-  # for large resolved blobs.
-  - name: l1-disk
-    emptyDir: {}
 
 volumeMounts:
   - name: cache-warmup-config
     mountPath: /etc/snowplow
     readOnly: true
-  - name: l1-disk
-    mountPath: /data/l1
 
 # Extra envFrom entries appended to the default (chart-managed
 # ConfigMap + jwt-sign-key Secret). Used to pick up ConfigMaps owned
