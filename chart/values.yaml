@@ -158,6 +158,7 @@ initContainers:
     image: redis:8.6.2-alpine
     imagePullPolicy: IfNotPresent
     restartPolicy: Always
+    args: ["--save", "", "--appendonly", "no"]
     ports:
       - containerPort: 6379
         protocol: TCP
