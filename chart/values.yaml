@@ -108,22 +108,28 @@ ingress:
 #   - 8 Gi: relied on GOMEMLIMIT < container-limit for GC backpressure;
 #     OOM-killed once during L2 canary boundary (transient peak-alloc
 #     spike, not steady-state leak).
-#   - 12 Gi (this revision, 2026-05-07 + Lever A bundle): bumped per
-#     PM gate G3 cheap-insurance modification. Page-loop prewarm
-#     materialises 64 pages * N paginating widgets * M cohorts of
-#     post-refilter intermediates; even at projected +5 MB resident
-#     delta the peak-alloc trajectory was unmodelled. 4 GiB headroom
-#     above the prior 8 Gi limit lets us validate the +500 MB
-#     peak-delta gate (G3) without re-trippping the OOMKill canary.
-#     GOMEMLIMIT bumped 7GiB -> 10GiB to preserve the ratio
-#     (limit - GOMEMLIMIT = 2 GiB headroom for transient spikes).
+#   - 12 Gi (2026-05-07 + Lever A bundle): bumped per PM gate G3
+#     cheap-insurance modification. Page-loop prewarm materialises
+#     64 pages * N paginating widgets * M cohorts of post-refilter
+#     intermediates; even at projected +5 MB resident delta the
+#     peak-alloc trajectory was unmodelled. 4 GiB headroom above the
+#     prior 8 Gi limit. GOMEMLIMIT bumped 7GiB -> 10GiB.
+#   - 16 Gi (this revision, 2026-05-07 evening + cohort-prewarm bundle,
+#     Option C): pod OOM-cycled 21 times under Chrome MCP measurement
+#     load (pprof + 5-parallel admin burst at 49K cmps). 12 Gi limit
+#     could not absorb measurement overhead on top of production
+#     workload + accumulated L1 entries (cache_keys 350K -> 410K).
+#     Bundles with snowplow 0.25.312 (cohort-prewarm-on-BID-transition)
+#     so the 1004-user fan-out on RoleBinding ADD has headroom to
+#     execute without OOM. GOMEMLIMIT bumped 10GiB -> 14GiB to
+#     preserve the 2 GiB GC-backpressure-before-OOM ratio.
 resources:
   limits:
     cpu: 4
-    memory: 12Gi
+    memory: 16Gi
   requests:
     cpu: 2
-    memory: 6Gi
+    memory: 8Gi
 
 # Q-PREWARM-R2 (v0.25.293+) probe configuration.
 #
@@ -255,15 +261,16 @@ env:
   BLIZZARD: "false"
   SKIP: "false"
   JQ_MODULES_PATH: /jq-modules
-  # Go runtime: trigger proactive GC at 10 GiB so we stay under the
-  # 12 Gi cgroup limit. Lever A bundle (2026-05-07): bumped 7GiB ->
-  # 10GiB to track the resources.limits.memory raise (8Gi -> 12Gi),
-  # preserving the 2 GiB headroom that GC backpressure relies on.
+  # Go runtime: trigger proactive GC at 14 GiB so we stay under the
+  # 16 Gi cgroup limit. Cohort-prewarm bundle (2026-05-07 evening,
+  # Option C): bumped 10GiB -> 14GiB to track the
+  # resources.limits.memory raise (12Gi -> 16Gi), preserving the
+  # 2 GiB headroom that GC backpressure relies on.
   # Must be BELOW the container memory limit so the Go runtime
   # backpressures via GC before Linux OOM-kills the pod. Setting this
   # at or above the container limit is a misconfiguration that has
   # caused OOM-kill incidents.
-  GOMEMLIMIT: 10GiB
+  GOMEMLIMIT: 14GiB
   # Lower GOGC (default 100) trades ~1% CPU for tighter memory headroom.
   GOGC: "50"
   CACHE_ENABLED: "true"
