@@ -78,12 +78,14 @@ ingress:
 # Production memory budget: 16Gi request / 16Gi limit
 # (Diego-confirmed 2026-05-15). Right-sized for a 1000-user production
 # deployment: the composition informer alone is ~1.2 GB and concurrent
-# per-user resolve working memory scales with active users. Request ==
-# limit makes the pod Guaranteed QoS so it is not a burst-eviction
-# target. Prior 4Gi/8Gi was test-cluster conservative; 0.30.92 admin
-# smoke OOMed at the lower bound at 50K-bench scale. Memory is dominated
-# by the informer cache plus transient JSON marshal/unmarshal of full
-# RESTAction trees during bursty per-request resolution.
+# per-user resolve working memory scales with active users. memory
+# request == limit guarantees the scheduler reserves the full footprint
+# and the pod is not a memory-pressure eviction target. Prior 4Gi/8Gi
+# was test-cluster conservative; 0.30.92 admin smoke OOMed at the lower
+# bound at 50K-bench scale. Memory is dominated by the informer cache
+# plus transient JSON marshal/unmarshal of full RESTAction trees during
+# bursty per-request resolution. (CPU stays request 500m / limit 2 —
+# QoS is Burstable; CPU is not the constrained resource here.)
 resources:
   limits:
     cpu: 2
