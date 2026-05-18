@@ -276,5 +276,14 @@ env:
   # threshold can be tuned. ~32 MiB admits compositions-list's ~26 MB
   # 50K-scale envelope while still flagging a pathologically large one.
   PREWARM_CONTENT_MAX_BYTES: "33554432"
+  # Ship 0.30.127 — bounded per-widget pagination default for the Phase-1
+  # discovery walk. A navigation widget whose resolved /call child Path
+  # declares no page/perPage `slice` is resolved under this page limit;
+  # a widget that DOES declare a slice overrides it. It is never -1 — -1
+  # is the unbounded value that, with phase1IteratorCap removed, would
+  # drive the 49K-row resolution storm. The walk only needs to traverse
+  # navigation STRUCTURE and discover (GVR-scoped) informers, so a small
+  # default suffices.
+  PREWARM_PAGE_LIMIT: "5"
 
 jwtSignKeySecretName: jwt-sign-key
