@@ -30,12 +30,11 @@ progressDeadlineSeconds: 600
 image:
   repository: ghcr.io/braghettos/snowplow
   pullPolicy: Always
-  # Ship 1 / 0.30.225 — plurals additive (permanent PluralsStore +
-  # handler swap + RegisteredGVRs expvar envelope). Builds on the Ship
-  # 0.5.5 / 0.30.224 process-alive-only /health handler. MUST be >=
-  # 0.30.225 for the RegisteredGVRs envelope shape Ship 2 consumes at
-  # its entry gate.
-  tag: "0.30.225"
+  # Ship 2 / 0.30.226 — plurals-resolver hot-path swap (north-star
+  # payload). Replaces dynamic.KindFor + dynamic.ResourceFor + crds GET
+  # cold paths with the permanent PluralsStore on customer-traffic hot
+  # paths. Builds on Ship 1 / 0.30.225 plurals-additive baseline.
+  tag: "0.30.226"
 
 imagePullSecrets: []
 nameOverride: ""
