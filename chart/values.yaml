@@ -231,7 +231,30 @@ image:
   # main.go register-call. NO behavior change — pure read-side
   # observability extension. NO env-var changes, NO CRD-template
   # changes; pure image.tag bump.
-  tag: "0.30.249"
+  #
+  # 0.30.250 / Task #268 / Ship A1 — paged LIST in the api-stage
+  # internal-REST-config dispatcher. Replaces an unpaginated
+  # nri.List(ctx, ListOptions{}) at internal_dispatch.go:244 with
+  # a continue-token paged walk (page size 500, matching client-go
+  # defaultPageSize AND snowplow's global informer listPageLimit).
+  # Bounds the LIST wall-clock at 50K composition CRs from 2.9-162 s
+  # (pre-0.30.250 single-call) to a paged ~8 s walk; closes the
+  # `context canceled` body-read failure mode that left the bench's
+  # 2 compositions-panel widgets (dashboard-compositions-panel-row-
+  # {piechart,table}) silent at S6 admin Dashboard. Byte-equivalent
+  # served envelope (UnstructuredContent marshal, metadata.continue
+  # cleared on the materialised list) so the JQ downstream is
+  # invariant. NO env-var changes, NO CRD-template changes; pure
+  # image.tag bump.
+  #
+  # Falsifier: WARN-level slog event
+  # `internal_dispatch.paged_list.completed` emits once per LIST
+  # with gvr/pages/items/page_limit/total_ms. Visible in pod logs at
+  # default DEBUG=false verbosity for post-deploy smoke.
+  #
+  # Refs: docs/task-267-s6-admin-2-widget-silent-skip-trace-2026-06-09.md
+  # Closes: #268
+  tag: "0.30.250"
 
 imagePullSecrets: []
 nameOverride: ""
