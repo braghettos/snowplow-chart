@@ -350,7 +350,7 @@
     },
     "env": {
       "type": "object",
-      "additionalProperties": false,
+      "additionalProperties": true,
       "properties": {
         "DEBUG": {
           "type": "string"
