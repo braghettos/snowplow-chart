@@ -277,23 +277,25 @@ image:
   # NO env-var changes, NO CRD-template changes, NO chart-structure
   # changes — pure image.tag bump.
   #
-  # 0.30.253 — Ship L2 (perf, design task-291): snapshot-generation
-  # authz memo inside EvaluateRBAC. Post-L1 the evaluator was walk-bound
-  # at 37.33% of pod CPU (O(candidate-CRB) walk over the 17,929
-  # same-subject CRBs per call). A process-wide memo keyed on
-  # PublishSeq(Gen)+identity+canonical-groups-hash+(verb,group,resource,
-  # namespace,name)+SkipBindingUID collapses the repeated verdict to one
-  # keyed map read. Stale-across-republish is impossible: per-lookup gen
-  # guard against the live snap.PublishSeq + CAS whole-shard swap; errors
-  # uncached; cap 16384 empirically derived (B5), refuse-insert on breach.
+  # 0.30.254 — Ship corrective (fix, trace task-301): the L2 authz memo
+  # (0.30.253) pinned transient fail-closed DENIES for a whole RBAC
+  # generation on a hot key (the snowplow SA holds a static wildcard CRB
+  # that can never be correctly denied), starving the RAFullList refresh
+  # and leaving admin compositions-list served EMPTY at 50K (regression
+  # journal 2026-06-10). Fix: authzMemoStore is now gated on allowed==true
+  # — denies are NEVER cached, they fall back to the walk every call and
+  # self-heal as pre-L2; permits keep the CPU win. New expvar
+  # snowplow_authz_memo_deny_uncached_total. Decline log now carries the
+  # failing stage name + error sample (observability).
   #
-  # Falsifier: re-run the task-288 20s CPU pprof under a 4x warm cj loop
-  # — EvaluateRBAC cum 37.33%-><20% (projection 3-7%), gcBgMarkWorker
-  # must not rise; snowplow_authz_memo_* expvars show hit-rate >=0.85,
-  # refused=0, entries under cap.
+  # Falsifier: warm pod — snowplow_authz_memo_deny_uncached_total > 0 and
+  # rising; raFullList declines ~0 (no escalation); memo hit-rate within a
+  # few % of 0.30.253 (CPU win preserved). Full content falsifier (admin
+  # compositions-list cell ~11 MB, forbidden ~130, declines ~16) lands in
+  # the scored Phase 6 50K run on 0.30.254.
   #
-  # Refs: docs/task-291-l2-authz-memo-design-2026-06-10.md
-  tag: "0.30.253"
+  # Refs: docs/task-301-refresh-decline-trace-2026-06-10.md
+  tag: "0.30.254"
 
 imagePullSecrets: []
 nameOverride: ""
