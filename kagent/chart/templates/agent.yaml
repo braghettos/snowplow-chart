@@ -1,0 +1,62 @@
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: krateo-restaction-agent
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: krateo-restaction-agent
+    app.kubernetes.io/part-of: krateo-snowplow
+spec:
+  type: Declarative
+  description: >-
+    Generates valid Krateo RESTAction CRDs (JQ filters, endpoint refs) and is the dedicated expert
+    on RESTActions — it knows the snowplow codebase (braghettos/snowplow) and the chart that
+    packages it (braghettos/krateo-snowplow-chart), declared in this chart's sources.
+  declarative:
+    deployment:
+      env:
+{{- include "krateo-restaction-agent.genaiEnv" . | nindent 8 }}
+    modelConfig: {{ .Values.modelConfig }}
+    stream: true
+    promptTemplate:
+      dataSources:
+        - kind: ConfigMap
+          name: krateo-restaction-agent-prompts-{{ .Values.prompts.language }}
+          alias: prompts
+    systemMessage: |
+      {{`{{include "prompts/restaction_agent"}}`}}
+    tools:
+      - type: McpServer
+        mcpServer:
+          name: kagent-tool-server
+          kind: RemoteMCPServer
+          apiGroup: kagent.dev
+          toolNames:
+            - k8s_get_resources
+            - k8s_get_resource_yaml
+            - k8s_apply_manifest
+{{- if .Values.github.enabled }}
+      - type: McpServer
+        mcpServer:
+          name: {{ .Values.github.mcpServer }}
+          kind: RemoteMCPServer
+          apiGroup: kagent.dev
+          toolNames:
+            - get_file_contents
+            - search_code
+            - search_repositories
+{{- end }}
+    a2aConfig:
+      skills:
+        - id: generate-restaction
+          name: Generate RESTActions
+          description: >-
+            Create Krateo RESTAction CRs with JQ filters and endpoint refs, grounded in the
+            RESTAction CRD schema and the snowplow source.
+          tags: [krateo, restaction, snowplow, jq]
+          examples:
+            - Create a RESTAction that lists the pods in the cluster.
+            - Write a RESTAction that calls an external API and filters the response with JQ.
+    deployment:
+      resources:
+{{- toYaml .Values.resources | nindent 8 }}
