@@ -2,7 +2,7 @@
 #
 # Diverges from upstream krateoplatformops/snowplow-chart in the ways
 # needed to run the cache-enabled fork at 50K-composition scale:
-#   - image points at ghcr.io/braghettos/snowplow
+#   - image points at ghcr.io/braghettos/krateo-snowplow
 #   - resources pre-sized for informer + in-process cache + GC headroom
 #   - env carries GOMEMLIMIT/GOGC for cgroup-aware GC
 #   - volumes mount the external snowplow-cache-warmup ConfigMap
@@ -25,7 +25,7 @@ replicaCount: 1
 progressDeadlineSeconds: 1200
 
 image:
-  repository: ghcr.io/braghettos/snowplow
+  repository: ghcr.io/braghettos/krateo-snowplow
   pullPolicy: Always
   # Empty -> defaults to the chart appVersion (= APP_VERSION = latest semver tag of the
   # braghettos/snowplow app repo, resolved by release-oci). The app fork builds multi-arch
